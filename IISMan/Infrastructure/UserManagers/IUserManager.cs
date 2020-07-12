@@ -2,7 +2,7 @@
 {
     public interface IUserManager
     {
-        void CreateLocalUser(string username, string description, bool isRunUnderIdentity);
+        void CreateLocalUser(string username, string userPwd, string description, bool isRunUnderIdentity);
         bool IsUserExists(string username);
     }
 }

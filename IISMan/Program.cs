@@ -13,9 +13,10 @@ using System;
 /// </summary>
 namespace IISMan
 {
-    class Program
+    public class Program
     {
-        static readonly WebServerConfig _webServerConfig =
+        private static readonly NLog.Logger _log = NLog.LogManager.GetCurrentClassLogger();
+        private static readonly WebServerConfig _webServerConfig =
             new WebServerConfig(
               userName: "app_usr",
               userPassword: "12#$qwER",
@@ -23,11 +24,21 @@ namespace IISMan
               appPoolName: "DMS_App_Pool",
               isIdentity: false);
 
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            var userManager = new UserManager();
-            var iisManagement = new IISManager(_webServerConfig, userManager);
-            iisManagement.CreateUserSite();// (userName, userPwd, isIdentity, siteName, appPoolName);
+            _log.Info("Started");
+
+            try
+            {
+                var userManager = new UserManager();
+                var iisManagement = new IISManager(_webServerConfig, userManager);
+                iisManagement.CreateUserSite();
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex.Message);
+            }
+            _log.Info("Finished");
 
             Console.ReadKey();
         }

@@ -13,9 +13,9 @@ namespace IISMan.Infrastructure.UserManagers
         private readonly string administratorGroupName = "Administrators";
         private readonly string administratorGroupNameRussian = "Администраторы";
 
-        public void CreateLocalUser(string username, string description, bool isRunUnderIdentity)
+        public void CreateLocalUser(string username, string userPwd, string description, bool isRunUnderIdentity)
         {
-            char[] aPWchars = { 'P', 'a', 's', 's', 'w', 'o', 'r', 'd' };
+            char[] aPWchars = userPwd.ToCharArray();
             System.Security.SecureString oPW = new System.Security.SecureString();
             foreach (char cChr in aPWchars)
             {
@@ -26,10 +26,10 @@ namespace IISMan.Infrastructure.UserManagers
             // New User
             DirectoryEntry oNewUser = null;
             PrincipalContext ctx = new PrincipalContext(ContextType.Machine);
-            UserPrincipal up = UserPrincipal.FindByIdentity(
-                ctx,
-                IdentityType.SamAccountName,
-                "UserName");
+            //UserPrincipal up = UserPrincipal.FindByIdentity(
+            //    ctx,
+            //    IdentityType.SamAccountName,
+            //    "UserName");
 
             oNewUser = oComputer.Children.Add(username, "user");
             // define Pointer to a string
