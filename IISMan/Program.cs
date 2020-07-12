@@ -21,6 +21,7 @@ namespace IISMan
               userName: "app_usr",
               userPassword: "12#$qwER",
               siteName: "ERPPRO",
+              applicationNames: new string[] { "ERPPRO, DMSPRO, FMSPRO" },
               appPoolName: "DMS_App_Pool",
               isIdentity: false);
 
