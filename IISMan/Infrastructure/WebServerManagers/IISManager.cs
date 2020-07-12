@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace IISMan.Infrastructure.WebServerManagers
 {
-    internal struct IISState
+    internal struct IISDefaults
     {
         public string DefaultRoot { get; set; }
         public string ProsysRoot { get; set; }
@@ -19,50 +19,47 @@ namespace IISMan.Infrastructure.WebServerManagers
         private readonly WebServerConfig _config;
         private readonly IUserManager _userManager;
 
-        private IISState _iisState;
-
-        private bool HasWebsite
-        {
-            get
-            {
-                var serverManager = new ServerManager();
-                SiteCollection availableSites = serverManager.Sites;
-
-                return availableSites.Any(x => x.Name == DomainName);
-            }
-        }
+        private IISDefaults _iisDefaults;
 
         public IISManager(WebServerConfig webServerConfig, IUserManager userManager)
         {
             _config = webServerConfig ?? throw new ArgumentNullException(nameof(webServerConfig));
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
 
-            InitIISProperties();
+            InitIISState();
         }
 
-        private void InitIISProperties()
+        private void InitIISState()
         {
             var systemDrive = Path.GetPathRoot(DirectoryResolver.ResolveWindowsDirectory());
-            _iisState = new IISState
+            _iisDefaults = new IISDefaults
             {
                 ProsysRoot = $@"{systemDrive}\PROSYSinetpub\wwwroot",
                 DefaultRoot = $@"{systemDrive}inetpub\wwwroot"
             };
         }
 
-        public void CreateUserSite()//(string userName, string userPwd, bool isIdentity, string siteName, string appPoolName)
+        public void CreateUserSite()
+        {
+            CreateUserIfNotExists();
+            CreateIISDirectoryAndChangeDefaults();
+            CreateIISPool();
+            CreateWebSite();
+        }
+
+        private void CreateUserIfNotExists()
         {
             if (!_userManager.IsUserExists(_config.UserName))
                 _userManager.CreateLocalUser(_config.UserName, _config.UserName, false);
+        }
 
-            if (!Directory.Exists(_iisState.DefaultRoot))
+        private void CreateIISDirectoryAndChangeDefaults()
+        {
+            if (!Directory.Exists(_iisDefaults.DefaultRoot))
             {
-                Directory.CreateDirectory(_iisState.ProsysRoot);
-                _iisState.DefaultRoot = _iisState.ProsysRoot;
+                Directory.CreateDirectory(_iisDefaults.ProsysRoot);
+                _iisDefaults.DefaultRoot = _iisDefaults.ProsysRoot;
             }
-
-            CreateIISPool();
-            CreateWebSite();
         }
 
         private void CreateIISPool()
@@ -88,25 +85,29 @@ namespace IISMan.Infrastructure.WebServerManagers
 
         private void CreateWebSite()
         {
-            if (!HasWebsite)
+            if (HasWebsite())
             {
-                if (!Directory.Exists(_iisState.DefaultRoot + "\\erppro"))
-                {
-                    Directory.CreateDirectory(_iisState.DefaultRoot + "\\erppro");
-                    _iisState.DefaultRoot = _iisState.ProsysRoot;
-                }
-
-                ServerManager iisManager = new ServerManager();
-                iisManager.Sites.Add(DomainName, "http", "*:8057:", _iisState.DefaultRoot + "\\erppro");
-                iisManager.ApplicationDefaults.ApplicationPoolName = _config.AppPoolName;
-                iisManager.CommitChanges();
-
-                Console.WriteLine("Site created");
+                return;
             }
-            else
+
+            if (!Directory.Exists(_iisDefaults.DefaultRoot + "\\erppro"))
             {
-                Console.WriteLine("Name Exists already");
+                Directory.CreateDirectory(_iisDefaults.DefaultRoot + "\\erppro");
+                _iisDefaults.DefaultRoot = _iisDefaults.ProsysRoot;
             }
+
+            ServerManager iisManager = new ServerManager();
+            iisManager.Sites.Add(DomainName, "http", "*:8057:", _iisDefaults.DefaultRoot + "\\erppro");
+            iisManager.ApplicationDefaults.ApplicationPoolName = _config.AppPoolName;
+            iisManager.CommitChanges();
+        }
+
+        private bool HasWebsite()
+        {
+            var serverManager = new ServerManager();
+            SiteCollection availableSites = serverManager.Sites;
+
+            return availableSites.Any(x => x.Name == DomainName);
         }
     }
 }
