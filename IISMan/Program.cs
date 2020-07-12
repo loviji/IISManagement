@@ -35,6 +35,7 @@ namespace IISMan
             iisMan.UserName = userName;
             iisMan.UserPwd = userPwd;
             iisMan.SiteName = siteName;
+            iisMan.AppPoolName = appPoolName;
 
             iisMan.createUserSite();// (userName, userPwd, isIdentity, siteName, appPoolName);
 
@@ -89,7 +90,7 @@ namespace IISMan
 
             UserManagement userManagement = new UserManagement();
             if (!userManagement.userExists(UserName))
-                userManagement.createLocalUser(UserName, UserName, false);
+                userManagement.createLocalUser(UserName, UserPwd, UserName, false);
 
             if (!Directory.Exists(iisdefaultroot))
             {
@@ -196,10 +197,10 @@ namespace IISMan
             DirectoryEntry oComputer = new DirectoryEntry("WinNT://" + Environment.MachineName + ",computer");
             return oComputer.Children.Cast<DirectoryEntry>().Any(d => d.SchemaClassName.Equals("Group") && d.Name.Equals(groupName));
         }
-        public void createLocalUser(string username, string description, bool isRunUnderIdentity)
+        public void createLocalUser(string username, string userPwd, string description, bool isRunUnderIdentity)
         {
 
-            char[] aPWchars = { 'P', 'a', 's', 's', 'w', 'o', 'r', 'd' };
+            char[] aPWchars = userPwd.ToCharArray();
             System.Security.SecureString oPW = new System.Security.SecureString();
             foreach (char cChr in aPWchars)
             {
