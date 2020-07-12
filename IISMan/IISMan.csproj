@@ -48,13 +48,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IWebserverManagement.cs" />
+    <Compile Include="Infrastructure\UserManagers\IUserManager.cs" />
+    <Compile Include="Infrastructure\WebServerManagers\WebServerConfig.cs" />
+    <Compile Include="Infrastructure\WebServerManagers\IWebServerManager.cs" />
+    <Compile Include="Infrastructure\DirectoryResolver.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Infrastructure\WebServerManagers\IISManager.cs" />
+    <Compile Include="Infrastructure\UserManagers\UserManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
