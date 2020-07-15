@@ -11,23 +11,27 @@ namespace IISMan.Infrastructure.WebServerManagers
 
         public string SiteName { get; }
 
-        public string AppPoolName { get; }
+        public string[] AppPoolNames { get; }
 
-        public IList<string> AppNames { get; }
+        public string[] AppNames { get; }
 
         public bool IsIdentity { get; }
+
+        public int ApplicationPortNumber { get; }
 
         public WebServerConfig(string userName,
             string userPassword,
             string siteName,
-            string appPoolName,
-            IList<string> applicationNames,
+            int applicationPortNumber,
+            string[] appPoolNames,
+            string[] applicationNames,
             bool isIdentity)
         {
             UserName = userName ?? throw new ArgumentNullException(nameof(userName));
             UserPassword = userPassword ?? throw new ArgumentNullException(nameof(userPassword));
             SiteName = siteName ?? throw new ArgumentNullException(nameof(siteName));
-            AppPoolName = appPoolName ?? throw new ArgumentNullException(nameof(appPoolName));
+            ApplicationPortNumber = applicationPortNumber;
+            AppPoolNames = appPoolNames ?? throw new ArgumentNullException(nameof(appPoolNames));
             AppNames = applicationNames?? throw new ArgumentNullException(nameof(applicationNames));
             IsIdentity = isIdentity;
         }

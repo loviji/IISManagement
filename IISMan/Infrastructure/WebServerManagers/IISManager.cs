@@ -16,7 +16,7 @@ namespace IISMan.Infrastructure.WebServerManagers
     {
         private static readonly NLog.Logger _log = NLog.LogManager.GetCurrentClassLogger();
 
-        private const string DomainName = "ERPPRO";
+
 
         private readonly WebServerConfig _config;
         private readonly IUserManager _userManager;
@@ -47,6 +47,42 @@ namespace IISMan.Infrastructure.WebServerManagers
             CreateIISDirectoryAndChangeDefaults();
             CreateIISPool();
             CreateWebSite();
+            CreateApplications();
+        }
+
+        private void CreateApplications()
+        {
+            foreach (var _configAppPoolName in _config.AppPoolNames)
+            {
+                _log.Info("Creating Web-site application:{0}", _configAppPoolName);
+                try
+                {
+                    string webapp = _configAppPoolName.Substring(0, _configAppPoolName.IndexOf("_"));
+                    CreateIISAppDirectory(webapp);
+                    using (ServerManager serverManager = new ServerManager())
+                    {
+                        string siteName = _config.SiteName;
+                        Site site = serverManager.Sites[siteName];
+                        ApplicationPool appPool = serverManager.ApplicationPools[_configAppPoolName];
+                        site.Stop();
+                        site.ApplicationDefaults.ApplicationPoolName = appPool.Name;
+
+                        site.Applications.Add("/" + webapp, _iisDefaults.DefaultRoot + "\\" + siteName + "\\" + webapp);
+                        site.Applications.Where(s => s.Path == "/" + webapp).FirstOrDefault().ApplicationPoolName = appPool.Name;
+                        //serverManager.Sites[siteName].Applications.Add("/HRM", _iisDefaults.DefaultRoot+"\\ERPPRO"+"\\HRM");
+                        //serverManager.Sites[siteName].Applications.Add("/DMS", _iisDefaults.DefaultRoot+"\\ERPPRO"+"\\DMS");
+                        site.Start();
+                        serverManager.CommitChanges();
+                    }
+
+                    _log.Info("IIS Web-site application:{0} created", _configAppPoolName);
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, "Error occured while creating IIS pool:{0}", _configAppPoolName);
+                }
+            }
+
         }
 
         private void CreateUserIfNotExists()
@@ -76,27 +112,41 @@ namespace IISMan.Infrastructure.WebServerManagers
             }
         }
 
+        private void CreateIISAppDirectory(string appName)
+        {
+            string path = _iisDefaults.DefaultRoot + "\\" + _config.SiteName + "\\" + appName;
+            if (!Directory.Exists(path))
+            {
+                _log.Info("Create web application:{0}", appName);
+                Directory.CreateDirectory(path);
+                _log.Info("Directory:{0} created", _iisDefaults.ProsysRoot);
+            }
+        }
+
         private void CreateIISPool()
         {
-            _log.Info("Creating IIS pool:{0}", _config.AppPoolName);
-            try
+            foreach (var _configAppPoolName in _config.AppPoolNames)
             {
-                using (ServerManager serverManager = new ServerManager())
+                _log.Info("Creating IIS pool:{0}", _configAppPoolName);
+                try
                 {
-                    ApplicationPool newPool = serverManager.ApplicationPools.Add(_config.AppPoolName);
-                    newPool.ManagedRuntimeVersion = "v4.0";
-                    newPool.AutoStart = false;
-                    newPool.ProcessModel.IdentityType = ProcessModelIdentityType.SpecificUser;
-                    newPool.ProcessModel.UserName = _config.UserName;
-                    newPool.ProcessModel.Password = _config.UserPassword;
-                    serverManager.CommitChanges();
-                }
+                    using (ServerManager serverManager = new ServerManager())
+                    {
+                        ApplicationPool newPool = serverManager.ApplicationPools.Add(_configAppPoolName);
+                        newPool.ManagedRuntimeVersion = "v4.0";
+                        newPool.AutoStart = false;
+                        newPool.ProcessModel.IdentityType = ProcessModelIdentityType.SpecificUser;
+                        newPool.ProcessModel.UserName = _config.UserName;
+                        newPool.ProcessModel.Password = _config.UserPassword;
+                        serverManager.CommitChanges();
+                    }
 
-                _log.Info("IIS pool:{0} created", _config.AppPoolName);
-            }
-            catch (Exception ex)
-            {
-                _log.Error(ex.Message, "Error occured while creating IIS pool:{0}", _config.AppPoolName);
+                    _log.Info("IIS pool:{0} created", _configAppPoolName);
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, "Error occured while creating IIS pool:{0}", _configAppPoolName);
+                }
             }
         }
 
@@ -119,10 +169,10 @@ namespace IISMan.Infrastructure.WebServerManagers
 
             try
             {
-                _log.Info("Attaching site to Application Pool: {0}", _config.AppPoolName);
+                _log.Info("Attaching site to Application Pool: {0}", _config.AppPoolNames[0]);
                 ServerManager iisManager = new ServerManager();
-                iisManager.Sites.Add(DomainName, "http", "*:8057:", _iisDefaults.DefaultRoot + "\\erppro");
-                iisManager.ApplicationDefaults.ApplicationPoolName = _config.AppPoolName;
+                iisManager.Sites.Add(_config.SiteName, "http", String.Format("*:{0}:", _config.ApplicationPortNumber.ToString()), _iisDefaults.DefaultRoot + "\\erppro");
+                iisManager.ApplicationDefaults.ApplicationPoolName = _config.AppPoolNames[0];
                 iisManager.CommitChanges();
                 _log.Info("Site successfuly attached to Application Pool.");
             }
@@ -137,7 +187,7 @@ namespace IISMan.Infrastructure.WebServerManagers
             var serverManager = new ServerManager();
             SiteCollection availableSites = serverManager.Sites;
 
-            return availableSites.Any(x => x.Name == DomainName);
+            return availableSites.Any(x => x.Name == _config.SiteName);
         }
     }
 }
