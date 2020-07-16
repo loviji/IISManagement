@@ -56,6 +56,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Infrastructure\CopyManager\CopyManager.cs" />
+    <Compile Include="Infrastructure\CopyManager\ICopyManager.cs" />
     <Compile Include="Infrastructure\UserManagers\IUserManager.cs" />
     <Compile Include="Infrastructure\WebServerManagers\WebServerConfig.cs" />
     <Compile Include="Infrastructure\WebServerManagers\IWebServerManager.cs" />
@@ -75,6 +77,8 @@
     </None>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Infrastructure\DatabaseManager\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

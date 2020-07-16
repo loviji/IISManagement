@@ -5,6 +5,8 @@ namespace IISMan.Infrastructure.WebServerManagers
 {
     public class WebServerConfig
     {
+        public string SetupGuid { get; }
+
         public string UserName { get; }
 
         public string UserPassword { get; }
@@ -19,7 +21,9 @@ namespace IISMan.Infrastructure.WebServerManagers
 
         public int ApplicationPortNumber { get; }
 
-        public WebServerConfig(string userName,
+        public WebServerConfig(
+            string setupGuid,
+            string userName,
             string userPassword,
             string siteName,
             int applicationPortNumber,
@@ -27,12 +31,13 @@ namespace IISMan.Infrastructure.WebServerManagers
             string[] applicationNames,
             bool isIdentity)
         {
+            SetupGuid = setupGuid ?? throw new ArgumentException(nameof(setupGuid));
             UserName = userName ?? throw new ArgumentNullException(nameof(userName));
             UserPassword = userPassword ?? throw new ArgumentNullException(nameof(userPassword));
             SiteName = siteName ?? throw new ArgumentNullException(nameof(siteName));
             ApplicationPortNumber = applicationPortNumber;
             AppPoolNames = appPoolNames ?? throw new ArgumentNullException(nameof(appPoolNames));
-            AppNames = applicationNames?? throw new ArgumentNullException(nameof(applicationNames));
+            AppNames = applicationNames ?? throw new ArgumentNullException(nameof(applicationNames));
             IsIdentity = isIdentity;
         }
     }

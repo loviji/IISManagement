@@ -3,6 +3,7 @@ using Microsoft.Web.Administration;
 using System;
 using System.IO;
 using System.Linq;
+using IISMan.Infrastructure.CopyManager;
 
 namespace IISMan.Infrastructure.WebServerManagers
 {
@@ -20,14 +21,15 @@ namespace IISMan.Infrastructure.WebServerManagers
 
         private readonly WebServerConfig _config;
         private readonly IUserManager _userManager;
+        private readonly ICopyManager _copyManager;
 
         private IISDefaults _iisDefaults;
 
-        public IISManager(WebServerConfig webServerConfig, IUserManager userManager)
+        public IISManager(WebServerConfig webServerConfig, IUserManager userManager, ICopyManager copyManager)
         {
             _config = webServerConfig ?? throw new ArgumentNullException(nameof(webServerConfig));
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
-
+            _copyManager = copyManager ?? throw new ArgumentNullException(nameof(copyManager));
             InitIISState();
         }
 
@@ -48,6 +50,21 @@ namespace IISMan.Infrastructure.WebServerManagers
             CreateIISPool();
             CreateWebSite();
             CreateApplications();
+            CopyApplicationFiles();
+        }
+
+        private void CopyApplicationFiles()
+        {
+            foreach (var _configAppPoolName in _config.AppPoolNames)
+            {
+                //string from = @"C:\ApplicationBackup\20200710-TQNKZ\DMSPRO";
+                //string to = @"C:\inetpub\wwwroot\ERPPRO\DMS";
+
+                string fromK = @"C:\ApplicationBackup\" + _config.SetupGuid + "\\" + _config.AppNames[0];
+                string webapp = _configAppPoolName.Substring(0, _configAppPoolName.IndexOf("_"));
+                string toK = _iisDefaults.DefaultRoot + "\\"+_config.SiteName+"\\"+webapp;
+                _copyManager.CopyFolders(fromK, toK);
+            }
         }
 
         private void CreateApplications()
